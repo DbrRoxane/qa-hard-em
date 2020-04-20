@@ -98,7 +98,8 @@ def read_squad_examples(logger, args, input_file, debug):
         doc_tokens_list1, char_to_word_offset_list = [], []
 
         for tokens in entry['context']:
-            paragraph_text = ' '.join(tokens)
+            tokens = tokens[2]
+            paragraph_text = ' '.join(str(tokens))
             doc_tokens = []
             char_to_word_offset = []
             prev_is_whitespace = True
@@ -187,6 +188,7 @@ def convert_examples_to_features(logger, args, examples, tokenizer, max_seq_leng
             tok_to_orig_index = []
             orig_to_tok_index = []
             all_doc_tokens = []
+            doc_tokens = doc_tokens[2]
             for (i, token) in enumerate(doc_tokens):
                 orig_to_tok_index.append(len(all_doc_tokens))
                 sub_tokens = tokenizer.tokenize([token], basic_done=True)

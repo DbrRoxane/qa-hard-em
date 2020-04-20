@@ -89,7 +89,7 @@ def main():
     parser.add_argument("--warmup_proportion", default=0.1, type=float,
                         help="Proportion of training to perform linear learning rate warmup for. E.g., 0.1 = 10% "
                              "of training.")
-    parser.add_argument("--save_checkpoints_steps", default=1000, type=int,
+    parser.add_argument("--save_checkpoints_steps", default=100000, type=int,
                         help="How often to save the model checkpoint.")
     parser.add_argument("--iterations_per_loop", default=1000, type=int,
                         help="How many steps to make in each estimator call.")
@@ -105,7 +105,7 @@ def main():
     parser.add_argument('--seed', type=int, default=42, help="random seed for initialization")
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
                         help="Number of updates steps to accumualte before performing a backward/update pass.")
-    parser.add_argument('--eval_period', type=int, default=500)
+    parser.add_argument('--eval_period', type=int, default=10000)
     parser.add_argument('--max_n_answers', type=int, default=20)
     parser.add_argument('--n_paragraphs', type=str, default='40')
     parser.add_argument('--verbose', action="store_true", default=False)
@@ -137,6 +137,7 @@ def main():
     if args.local_rank == -1 or args.no_cuda:
         device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
         n_gpu = torch.cuda.device_count()
+        print("n_gpu", n_gpu)
     else:
         device = torch.device("cuda", args.local_rank)
         n_gpu = 1
@@ -225,6 +226,7 @@ def main():
             state_dict = {filter(k):v for (k,v) in state_dict.items()}
             model.load_state_dict(state_dict)
     model.to(device)
+    print("device :",device)
 
     if args.local_rank != -1:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.local_rank],
@@ -255,6 +257,7 @@ def main():
 
         for epoch in range(int(args.num_train_epochs)):
             if epoch>0 and train_split:
+                print("start get loader")
                 train_file = args.train_file.split(',')[epoch%n_train_files]
                 train_dataloader = get_dataloader(
                         logger=logger, args=args, \
@@ -263,6 +266,7 @@ def main():
                         batch_size=args.train_batch_size,
                         num_epochs=args.num_train_epochs,
                         tokenizer=tokenizer)[0]
+                print("finish get loader")
 
             for step, batch in enumerate(train_dataloader):
                 global_step += 1
@@ -278,9 +282,12 @@ def main():
                     optimizer.step()    # We have accumulated enought gradients
                     model.zero_grad()
                 if global_step % args.eval_period == 0:
+                    print("global step", global_step, "eval_period", args.eval_period)
                     model.eval()
+                    print("start predict")
                     f1 =  predict(logger, args, model, eval_dataloader, eval_examples, eval_features, \
                                   device, write_prediction=False)
+                    print("end predict")
                     logger.info("Step %d Train loss %.2f EM %.2f F1 %.2f on epoch=%d" % (
                         global_step, np.mean(train_losses), f1[0]*100, f1[1]*100, epoch))
                     train_losses = []
