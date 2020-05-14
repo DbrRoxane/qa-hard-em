@@ -33,7 +33,7 @@ def get_dataloader(logger, args, input_file, is_training, \
             train_features = features['features']
             examples = features.get('examples', None)
     else:
-
+        print("does not exist")
         examples = read_squad_examples(
             logger=logger, args=args, input_file=input_file, debug=args.debug)
 
@@ -98,7 +98,7 @@ def read_squad_examples(logger, args, input_file, debug):
         doc_tokens_list1, char_to_word_offset_list = [], []
 
         for tokens in entry['context']:
-            tokens = tokens[2]
+            tokens = tokens
             paragraph_text = ' '.join(str(tokens))
             doc_tokens = []
             char_to_word_offset = []
@@ -188,7 +188,7 @@ def convert_examples_to_features(logger, args, examples, tokenizer, max_seq_leng
             tok_to_orig_index = []
             orig_to_tok_index = []
             all_doc_tokens = []
-            doc_tokens = doc_tokens[2]
+            doc_tokens = doc_tokens
             for (i, token) in enumerate(doc_tokens):
                 orig_to_tok_index.append(len(all_doc_tokens))
                 sub_tokens = tokenizer.tokenize([token], basic_done=True)
@@ -237,6 +237,7 @@ def convert_examples_to_features(logger, args, examples, tokenizer, max_seq_leng
                 start_offset += min(length, doc_stride)
 
             truncated.append(len(doc_spans))
+            doc_spans = [doc_spans[0]]
             for (doc_span_index, doc_span) in enumerate(doc_spans):
                 tokens = []
                 token_to_orig_map = {}

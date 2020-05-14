@@ -67,11 +67,11 @@ def main():
                         default="/home/sewon/data/squad/dev-v1.1.json")
     parser.add_argument("--init_checkpoint", type=str,
                         help="Initial checkpoint (usually from a pre-trained BERT model).", \
-                        default=BERT_DIR+"pytorch_model.bin")
+                        default="./out/triviaqa-first-only-32-512/best-model.pt")#BERT_DIR+"pytorch_model.bin")
     parser.add_argument("--do_lower_case", default=True, action='store_true',
                         help="Whether to lower case the input text. Should be True for uncased "
                              "models and False for cased models.")
-    parser.add_argument("--max_seq_length", default=300, type=int,
+    parser.add_argument("--max_seq_length", default=400, type=int,
                         help="The maximum total input sequence length after WordPiece tokenization. Sequences "
                              "longer than this will be truncated, and sequences shorter than this will be padded.")
     parser.add_argument("--doc_stride", default=128, type=int,

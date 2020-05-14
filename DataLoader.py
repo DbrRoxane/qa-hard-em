@@ -7,6 +7,8 @@ class MyDataset(Dataset):
     def __init__(self, input_ids, input_mask, segment_ids,
                  start_positions=None, end_positions=None, switches=None, answer_mask=None,
                  is_training=False):
+        #input()        
+        #[print(i.size()) for i in input_ids]
 
         self.input_ids, self.input_mask, self.segment_ids = [torch.cat([i.squeeze(0) \
                 for i in input], 0) for input in [input_ids, input_mask, segment_ids]]
@@ -81,5 +83,5 @@ class MyDataLoader(DataLoader):
                                 is_training=is_training)
             sampler=SequentialSampler(dataset)
 
-        super(MyDataLoader, self).__init__(dataset, sampler=sampler, batch_size=batch_size)
+        super(MyDataLoader, self).__init__(dataset, sampler=sampler, batch_size=batch_size, drop_last=True)
 
