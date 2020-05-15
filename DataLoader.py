@@ -10,15 +10,20 @@ class MyDataset(Dataset):
         #input()        
         #[print(i.size()) for i in input_ids]
 
-        self.input_ids, self.input_mask, self.segment_ids = [torch.cat([i.squeeze(0) \
-                for i in input], 0) for input in [input_ids, input_mask, segment_ids]]
+        self.input_ids, self.input_mask, self.segment_ids = [torch.cat([i for i in input], 0) \
+                                            for input in [input_ids, input_mask, segment_ids]]
+        #self.input_ids, self.input_mask, self.segment_ids = [torch.cat([i.squeeze(0) \
+        #        for i in input], 0) for input in [input_ids, input_mask, segment_ids]]
         self.is_training = is_training
 
         if is_training:
-            self.start_positions, self.end_positions, self.switches, self.answer_mask = [torch.cat([i.squeeze(0) \
+            self.start_positions, self.end_positions, self.switches, self.answer_mask = [torch.cat([i \
                 for i in input], 0) for input in [start_positions, end_positions, switches, answer_mask]]
+            #self.start_positions, self.end_positions, self.switches, self.answer_mask = [torch.cat([i.squeeze(0) \
+            #    for i in input], 0) for input in [start_positions, end_positions, switches, answer_mask]]
             indices1, indices2 = [], []
             for i in range(self.input_ids.size(0)):
+                #print(i, self.switches[i], self.answer_mask[i])
                 switch = [s for (s, m) in zip(self.switches[i], self.answer_mask[i]) if m==1]
                 if 3 in switch:
                     indices2.append(i)
@@ -74,6 +79,7 @@ class MyDataLoader(DataLoader):
                                         for _features in features]
             all_answer_mask = [torch.tensor([f.answer_mask for f in _features], dtype=torch.long) \
                                         for _features in features]
+            #print("switch:{}, answer_mask:{}".format(all_switches[0].size(), all_answer_mask[0].size()))
             dataset = MyDataset(all_input_ids, all_input_mask, all_segment_ids,
                     all_start_positions, all_end_positions, all_switches, all_answer_mask,
                     is_training=is_training)

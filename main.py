@@ -67,7 +67,7 @@ def main():
                         default="/home/sewon/data/squad/dev-v1.1.json")
     parser.add_argument("--init_checkpoint", type=str,
                         help="Initial checkpoint (usually from a pre-trained BERT model).", \
-                        default="./out/triviaqa-first-only-32-512/best-model.pt")#BERT_DIR+"pytorch_model.bin")
+                        default=BERT_DIR+"pytorch_model.bin")
     parser.add_argument("--do_lower_case", default=True, action='store_true',
                         help="Whether to lower case the input text. Should be True for uncased "
                              "models and False for cased models.")
@@ -215,6 +215,8 @@ def main():
                 batch_size=args.train_batch_size,
                 num_epochs=args.num_train_epochs,
                 tokenizer=tokenizer)
+        for step, batch in enumerate(train_dataloader):
+            print(step, batch)
 
     if args.init_checkpoint is not None:
         logger.info("Loading from {}".format(args.init_checkpoint))
