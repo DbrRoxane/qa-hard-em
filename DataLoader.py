@@ -10,15 +10,10 @@ class MyDataset(Dataset):
 
         self.input_ids, self.input_mask, self.segment_ids = [torch.cat([i for i in input], 0) \
                                             for input in [input_ids, input_mask, segment_ids]]
-        #self.input_ids, self.input_mask, self.segment_ids = [torch.cat([i.squeeze(0) \
-        #        for i in input], 0) for input in [input_ids, input_mask, segment_ids]]
         self.is_training = is_training
 
-        print(self.input_ids.size())
         if is_training:
             self.start_positions, self.end_positions, self.switches, self.answer_mask = [torch.cat([i \
-                for i in input], 0) for input in [start_positions, end_positions, switches, answer_mask]]
-            #self.start_positions, self.end_positions, self.switches, self.answer_mask = [torch.cat([i.squeeze(0) \
             #    for i in input], 0) for input in [start_positions, end_positions, switches, answer_mask]]
             indices1, indices2 = [], []
             for i in range(self.input_ids.size(0)):
