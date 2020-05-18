@@ -19,8 +19,8 @@ fi
 #done
 #dev_file="${data_dir}/${data}-dev.json"
 #test_file="${data_dir}/${data}-test.json"
-train_file="../data/narrativeqa/min_summaries_with_answer_train.json"
-dev_file="../data/narrativeqa/min_summaries_with_answer_dev.json"
+train_file="../data/narrativeqa/min_summaries_with_answer_train.json2"
+dev_file="../data/narrativeqa/min_summaries_with_answer_dev.json2"
 test_file="../data/narrativeqa/min_summaries_with_answer_test.json"
 
 
