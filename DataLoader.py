@@ -7,26 +7,23 @@ class MyDataset(Dataset):
     def __init__(self, input_ids, input_mask, segment_ids,
                  start_positions=None, end_positions=None, switches=None, answer_mask=None,
                  is_training=False):
-        #input()        
-        #[print(i.size()) for i in input_ids]
 
-        #self.input_ids, self.input_mask, self.segment_ids = [torch.cat([i for i in input], 0) \
-        #                                    for input in [input_ids, input_mask, segment_ids]]
-        self.input_ids, self.input_mask, self.segment_ids = [torch.cat([i.squeeze(0) \
-                for i in input], 0) for input in [input_ids, input_mask, segment_ids]]
+        self.input_ids, self.input_mask, self.segment_ids = [torch.cat([i for i in input], 0) \
+                                            for input in [input_ids, input_mask, segment_ids]]
+        #self.input_ids, self.input_mask, self.segment_ids = [torch.cat([i.squeeze(0) \
+        #        for i in input], 0) for input in [input_ids, input_mask, segment_ids]]
         self.is_training = is_training
 
         print(self.input_ids.size())
         if is_training:
-            #self.start_positions, self.end_positions, self.switches, self.answer_mask = [torch.cat([i \
-            #    for i in input], 0) for input in [start_positions, end_positions, switches, answer_mask]]
-            self.start_positions, self.end_positions, self.switches, self.answer_mask = [torch.cat([i.squeeze(0) \
+            self.start_positions, self.end_positions, self.switches, self.answer_mask = [torch.cat([i \
                 for i in input], 0) for input in [start_positions, end_positions, switches, answer_mask]]
+            #self.start_positions, self.end_positions, self.switches, self.answer_mask = [torch.cat([i.squeeze(0) \
+            #    for i in input], 0) for input in [start_positions, end_positions, switches, answer_mask]]
             indices1, indices2 = [], []
             for i in range(self.input_ids.size(0)):
-                #print(i, self.switches[i], self.answer_mask[i])
                 switch = [s for (s, m) in zip(self.switches[i], self.answer_mask[i]) if m==1]
-                if 0 in switch: #be careful, changes, could cause damages
+                if 0 in switch: 
                     indices2.append(i)
                 else:
                     indices1.append(i)
@@ -45,7 +42,6 @@ class MyDataset(Dataset):
 
     def __getitem__(self, idx):
         if self.is_training:
-            #print("coucou",idx)
             if idx%2==0:
                 idx=self.positive_indices[int(idx/2)]
             else:
@@ -65,8 +61,6 @@ class MyDataset(Dataset):
 class MyDataLoader(DataLoader):
 
     def __init__(self, features, batch_size, is_training):
-        print(len(features))
-        print(len(features[0]))
         all_input_ids = [torch.tensor([f.input_ids for f in _features], dtype=torch.long) \
                                 for _features in features]
         all_input_mask = [torch.tensor([f.input_mask for f in _features], dtype=torch.long) \
@@ -83,7 +77,6 @@ class MyDataLoader(DataLoader):
                                         for _features in features]
             all_answer_mask = [torch.tensor([f.answer_mask for f in _features], dtype=torch.long) \
                                         for _features in features]
-            #print("switch:{}, answer_mask:{}".format(all_switches[0].size(), all_answer_mask[0].size()))
             dataset = MyDataset(all_input_ids, all_input_mask, all_segment_ids,
                     all_start_positions, all_end_positions, all_switches, all_answer_mask,
                     is_training=is_training)
@@ -93,5 +86,5 @@ class MyDataLoader(DataLoader):
                                 is_training=is_training)
             sampler=SequentialSampler(dataset)
 
-        super(MyDataLoader, self).__init__(dataset, sampler=sampler, batch_size=batch_size, drop_last=True)
+        super(MyDataLoader, self).__init__(dataset, sampler=sampler, batch_size=batch_size)#, drop_last=True)
 

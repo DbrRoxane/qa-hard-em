@@ -33,7 +33,6 @@ def get_dataloader(logger, args, input_file, is_training, \
             train_features = features['features']
             examples = features.get('examples', None)
     else:
-        print("does not exist")
         examples = read_squad_examples(
             logger=logger, args=args, input_file=input_file, debug=args.debug)
 
@@ -125,7 +124,9 @@ def read_squad_examples(logger, args, input_file, debug):
             if len(answers)==0:
                 original_answers, start_positions, end_positions, switches = [""], [0], [0], [3]
             else:
-                original_answers, start_positions, end_positions = [[a[key] for a in answers] for key in ['text', 'word_start', 'word_end']]
+                original_answers, start_positions, end_positions = \
+                        [[a[key] for a in answers] \
+                         for key in ['text', 'word_start', 'word_end']]
                 switches = [0 for _ in answers]
             original_answers_list.append(original_answers)
             start_positions_list.append(start_positions)
@@ -315,7 +316,7 @@ def convert_examples_to_features(logger, args, examples, tokenizer, max_seq_leng
                     for _ in range(max_n_answers-len(start_positions)):
                         start_positions.append(0)
                         end_positions.append(0)
-                        switches.append(0)
+                        switches.append(3) # where was the error
                         answer_mask.append(0)
 
                 current_features.append(
