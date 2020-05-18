@@ -203,7 +203,6 @@ def main():
                 batch_size=args.predict_batch_size,
                 num_epochs=1,
                 tokenizer=tokenizer)
-    print(eval_dataloader.dataset.__len__())
 
     if args.do_train:
         train_file = args.train_file
@@ -216,7 +215,6 @@ def main():
                 batch_size=args.train_batch_size,
                 num_epochs=args.num_train_epochs,
                 tokenizer=tokenizer)
-        print(train_dataloader.dataset.__len__())
     if args.init_checkpoint is not None:
         logger.info("Loading from {}".format(args.init_checkpoint))
         state_dict = torch.load(args.init_checkpoint, map_location='cpu')
