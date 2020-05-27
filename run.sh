@@ -2,7 +2,7 @@ data=$1
 loss=$2
 bs=16
 pbs=256
-output_dir="../data/output/min_predictions_sum_r5_3passages_BERT/"
+output_dir="../data/output/min_trainsum_hardem_r5"
 data_dir="../data/narrativeqa/min_format"
 
 if [ ${loss} = "hard-em" ]
@@ -22,8 +22,13 @@ fi
 #dev_file="${data_dir}/${data}-dev.json"
 #test_file="${data_dir}/${data}-test.json"
 train_file="${data_dir}/min_sums_with_answer_train.json_r5"
-dev_file="${data_dir}/min_sums_with_answer_dev.json_r5"
-test_file="${data_dir}/min_sums_with_answer_test.json_r5"
+dev_file_all="${data_dir}/min_all_with_answer_dev.json_allrankingtech_severalanswers_r5"
+test_file_all="${data_dir}/min_all_with_answer_test.json_allrankingtech_severalanswers_r5"
+dev_file_sum="${data_dir}/min_sums_with_answer_dev.json_r5"
+test_file_sum="${data_dir}/min_sums_with_answer_dev.json_r5"
+
+
+#min_sums_with_answer_test.json_r5"
 
 #train_file="${data_dir}/min_summaries_with_answer_train.json"
 #all_with_dev_file5="${data_dir}/min_all_with_answer_dev.json_r5"
@@ -36,20 +41,33 @@ test_file="${data_dir}/min_sums_with_answer_test.json_r5"
 #sum_test_file="${data_dir}/min_summaries_without_answer_test.json"
 #sum_dev_file="${data_dir}/min_summaries_without_answer_dev.json"
 
-python3 main.py --do_train --output_dir ${output_dir} \
-          --train_file ${train_file} --predict_file ${dev_file} \
-          --train_batch_size ${bs} --predict_batch_size ${pbs} --verbose --loss_type ${loss} --tau ${tau} --verbose_logging 
+#python3 main.py --do_train --output_dir ${output_dir} \
+#          --train_file ${train_file} --predict_file ${dev_file} \
+#          --train_batch_size ${bs} --predict_batch_size ${pbs} --verbose --loss_type ${loss} --tau ${tau} --verbose_logging 
 #
-#python3 /app/trivia-qa/main.py --do_predict --output_dir ${output_dir} \
-#          --predict_file ${all_with_test_file} \
-#	  --init_checkpoint "/nas-data/trivia-qa/outputs/trivia-qa-job-0.1.dev53-ga79f2d5/narrativeqa-first-only_14mai/best-model.pt"\
-#          --predict_batch_size ${pbs} --n_paragraphs "10,20,40,80" --prefix min_predallwithanswer_trainedsumwithanswer_test
-#	  --init_checkpoint "/nas-data/trivia-qa/outputs/trivia-qa-job-0.1.dev53-ga79f2d5/narrativeqa-first-only_14mai/best-model.pt"\
 
-#python3 main.py --do_predict --output_dir ${output_dir} \
-#          --predict_file ${all_with_test_file} \
-#	  --init_checkpoint "narrativeqa_summary_3passages_r5_firstonly_bestmodel.pt" \
-#          --predict_batch_size ${pbs} --n_paragraphs "1,2,3,4,5" --prefix "min_all_with_answer_test.json_several_answers_r5_5parag"
+python3 main.py --do_predict --output_dir ${output_dir} \
+          --predict_file ${test_file_all} \
+	  --init_checkpoint "${output_dir}/best-model.pt"\
+          --predict_batch_size ${pbs} --n_paragraphs "1,2,3,5,7,10" --prefix min_predall_oracle_r5_allranking_trainedsum_test
+
+python3 main.py --do_predict --output_dir ${output_dir} \
+          --predict_file ${dev_file_all} \
+	  --init_checkpoint "${output_dir}/best-model.pt" \
+          --predict_batch_size ${pbs} --n_paragraphs "1,2,3,5,7,10" --prefix min_predall_oracle_r5_allranking_trainedsum_dev
+
+python3 main.py --do_predict --output_dir ${output_dir} \
+          --predict_file ${test_file_sum} \
+	  --init_checkpoint "${output_dir}/best-model.pt"\
+          --predict_batch_size ${pbs} --n_paragraphs "1" --prefix min_predsum_r5_trainedsum_test
+
+python3 main.py --do_predict --output_dir ${output_dir} \
+          --predict_file ${dev_file_sum} \
+	  --init_checkpoint "${output_dir}/best-model.pt" \
+          --predict_batch_size ${pbs} --n_paragraphs "1" --prefix min_predsum_r5_trainedsum_dev
+
+
+
 #python3 /app/trivia-qa/main.py --do_predict --output_dir ${output_dir} \
 #          --predict_file ${all_without_test_file} \
 #	  --init_checkpoint "/nas-data/trivia-qa/outputs/trivia-qa-job-0.1.dev53-ga79f2d5/narrativeqa-first-only_14mai/best-model.pt"\
