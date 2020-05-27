@@ -14,11 +14,11 @@ class MyDataset(Dataset):
 
         if is_training:
             self.start_positions, self.end_positions, self.switches, self.answer_mask = [torch.cat([i \
-            #    for i in input], 0) for input in [start_positions, end_positions, switches, answer_mask]]
+                for i in input], 0) for input in [start_positions, end_positions, switches, answer_mask]]
             indices1, indices2 = [], []
             for i in range(self.input_ids.size(0)):
                 switch = [s for (s, m) in zip(self.switches[i], self.answer_mask[i]) if m==1]
-                if 0 in switch: 
+                if 3 in switch: 
                     indices2.append(i)
                 else:
                     indices1.append(i)

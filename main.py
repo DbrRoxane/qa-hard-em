@@ -105,7 +105,7 @@ def main():
     parser.add_argument('--seed', type=int, default=42, help="random seed for initialization")
     parser.add_argument('--gradient_accumulation_steps', type=int, default=1,
                         help="Number of updates steps to accumualte before performing a backward/update pass.")
-    parser.add_argument('--eval_period', type=int, default=10000)
+    parser.add_argument('--eval_period', type=int, default=1000)
     parser.add_argument('--max_n_answers', type=int, default=20)
     parser.add_argument('--n_paragraphs', type=str, default='40')
     parser.add_argument('--verbose', action="store_true", default=False)
