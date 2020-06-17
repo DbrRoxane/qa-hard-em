@@ -177,6 +177,8 @@ def convert_examples_to_features(logger, args, examples, tokenizer, max_seq_leng
         if len(query_tokens) > max_query_length:
             query_tokens = query_tokens[0:max_query_length]
 
+        #print(len(example.doc_tokens), len(example.orig_answer_text), \
+        #    len(example.start_position), len(example.end_position), len(example.switch))
         assert len(example.doc_tokens) == len(example.orig_answer_text) == \
             len(example.start_position) == len(example.end_position) == len(example.switch)
 

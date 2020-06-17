@@ -47,7 +47,7 @@ RawResult = collections.namedtuple("RawResult",
 
 def main():
     parser = argparse.ArgumentParser()
-    BERT_DIR = "uncased_L-12_H-768_A-12/"
+    BERT_DIR = "bert-large-uncased/" #"uncased_L-12_H-768_A-12/"
     ## Required parameters
     parser.add_argument("--bert_config_file", default=BERT_DIR+"bert_config.json", \
                         type=str, help="The config json file corresponding to the pre-trained BERT model. "
@@ -181,7 +181,6 @@ def main():
             "was only trained up to sequence length %d" %
             (args.max_seq_length, bert_config.max_position_embeddings))
 
-
     model = BertForQuestionAnswering(bert_config, device, 4, loss_type=args.loss_type, tau=args.tau)
     metric_name = "EM"
 
@@ -216,7 +215,7 @@ def main():
                 tokenizer=tokenizer)
     if args.init_checkpoint is not None:
         logger.info("Loading from {}".format(args.init_checkpoint))
-        state_dict = torch.load(args.init_checkpoint, map_location='cpu')
+        state_dict = torch.load(args.init_checkpoint, map_location='gpu')
         if args.do_train and args.init_checkpoint.endswith('pytorch_model.bin'):
             model.bert.load_state_dict(state_dict)
         else:

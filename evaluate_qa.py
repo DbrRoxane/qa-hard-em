@@ -252,7 +252,7 @@ def get_final_text(pred_text, orig_text, do_lower_case, logger, verbose_logging)
     if start_position == -1:
         if verbose_logging:
             logger.info(
-                "Unable to find text: '%s' in '%s'" % (pred_text, orig_text))
+                "Unable to find text: '%s' in '%s' when tokenized is '%s'" % (pred_text, orig_text, tok_text))
         return orig_text
     end_position = start_position + len(pred_text) - 1
 
