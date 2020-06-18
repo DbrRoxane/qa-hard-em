@@ -1,7 +1,7 @@
 data=$1
 loss=$2
-bs=16
-pbs=256
+bs=2
+pbs=2
 
 P1_dir="../data/output/P1_SUM_preprocess2/"
 P2_dir="../data/output/P2_CRCAE/"
@@ -50,18 +50,25 @@ NRNAE_test="${data_dir}min_all_without_answer_test.json_bert_r6_20para_preproces
 trivia_train="./preprocessed-open-domain-qa-data/triviaqa-train0.json"
 trivia_dev="./preprocessed-open-domain-qa-data/triviaqa-dev.json"
 
-python3 main.py --do_train --output_dir ${P1_dir} \
-	  --train_file ${P1_train} --predict_file ${CRNAE_dev} \
-          --train_batch_size ${bs} --predict_batch_size ${pbs} --verbose --loss_type ${loss} --tau ${tau} --verbose_logging 
+#python3 main.py --do_train --output_dir ${P1_dir} \
+#	  --train_file ${P1_train} --predict_file ${CRNAE_dev} \
+#          --train_batch_size ${bs} --predict_batch_size ${pbs} --verbose --loss_type ${loss} --tau ${tau} --verbose_logging 
 
 #python3 main.py --do_predict --output_dir ${P3noP2_dir} \
 #          --predict_file ${CRNAE_dev} \
 #	  --init_checkpoint ${P3noP2_ckpt}\
 #          --predict_batch_size ${pbs} --n_paragraphs "5,6,7,8,9" --prefix CRNAE_r6_3para_dev_
-#python3 main.py --do_predict --output_dir ${P3noP2_dir} \
-#          --predict_file ${CRNAE_test} \
-#	  --init_checkpoint ${P1_ckpt}\
-#          --predict_batch_size ${pbs} --n_paragraphs "5,6,7,8,9" --prefix CRNAE_r6_3para_test_
+
+python3 main.py --do_predict --output_dir ${P1_dir} \
+          --predict_file ${CRNAE_test} \
+	  --init_checkpoint ${P1_ckpt}\
+          --predict_batch_size ${pbs} --n_paragraphs "5,6,7,8,9" --prefix CRNAE_r6_3para_test_
+
+python3 main.py --do_predict --output_dir ${P1_dir} \
+          --predict_file ${NRNAE_test} \
+	  --init_checkpoint ${P1_ckpt}\
+          --predict_batch_size ${pbs} --n_paragraphs "5,10,15,20" --prefix NRNAE_r6_20para_test_
+
 #python3 main.py --do_predict --output_dir ${P1_dir} \
 #          --predict_file ${CRNAE_test} \
 #	  --init_checkpoint ${P1_ckpt}\
