@@ -34,6 +34,9 @@ import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from torch.utils.data.distributed import DistributedSampler
 
+import shutil
+import glob
+
 import tokenization
 from modeling import BertConfig, BertForQuestionAnswering
 from optimization import BERTAdam
@@ -47,7 +50,7 @@ RawResult = collections.namedtuple("RawResult",
 
 def main():
     parser = argparse.ArgumentParser()
-    BERT_DIR = "bert-large-uncased/" #"uncased_L-12_H-768_A-12/"
+    BERT_DIR = "uncased_L-12_H-768_A-12/"  #"bert-large-uncased/" #"uncased_L-12_H-768_A-12/"
     ## Required parameters
     parser.add_argument("--bert_config_file", default=BERT_DIR+"bert_config.json", \
                         type=str, help="The config json file corresponding to the pre-trained BERT model. "
@@ -119,6 +122,9 @@ def main():
     parser.add_argument('--prefix', type=str, default="") #500
     parser.add_argument('--debug', action="store_true", default=False)
 
+    parser.add_argument('--copy_init_checkpoint_locally', type=bool, default=False,
+                       help="Whether to copy initial checkpoint to a local temporary folder before import.")
+
     args = parser.parse_args()
 
     if os.path.exists(args.output_dir) and os.listdir(args.output_dir):
@@ -188,6 +194,19 @@ def main():
     tokenizer = tokenization.FullTokenizer(
         vocab_file=args.vocab_file, do_lower_case=args.do_lower_case)
 
+  # TODO : Clean implementation if it works
+    if args.copy_init_checkpoint_locally:
+            checkpoint_tmp_dir="tmp-init-checkpoint/"
+            os.makedirs(checkpoint_tmp_dir, exist_ok=True)
+            checkpoint_dir=os.path.dirname(FLAGS.init_checkpoint)
+            checkpoint_file_name = os.path.basename(FLAGS.init_checkpoint)
+            print("*****CB: copy  (" + checkpoint_dir + '/' + checkpoint_file_name + '*' + ")")
+            for file in glob.glob(checkpoint_dir + '/' + checkpoint_file_name + '*'):
+                print(file)
+                shutil.copy(file, checkpoint_tmp_dir)
+            FLAGS.init_checkpoint=checkpoint_tmp_dir + checkpoint_file_name
+            print("*****CB: new checkpoint  (" + FLAGS.init_checkpoint + ")")
+
     train_examples = None
     num_train_steps = None
     train_split = ',' in args.train_file
@@ -215,7 +234,7 @@ def main():
                 tokenizer=tokenizer)
     if args.init_checkpoint is not None:
         logger.info("Loading from {}".format(args.init_checkpoint))
-        state_dict = torch.load(args.init_checkpoint, map_location='gpu')
+        state_dict = torch.load(args.init_checkpoint, map_location='cpu')
         if args.do_train and args.init_checkpoint.endswith('pytorch_model.bin'):
             model.bert.load_state_dict(state_dict)
         else:
