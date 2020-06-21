@@ -188,24 +188,12 @@ def main():
             (args.max_seq_length, bert_config.max_position_embeddings))
 
     model = BertForQuestionAnswering(bert_config, device, 4, loss_type=args.loss_type, tau=args.tau)
+    model.to(device)
     metric_name = "EM"
 
 
     tokenizer = tokenization.FullTokenizer(
         vocab_file=args.vocab_file, do_lower_case=args.do_lower_case)
-
-  # TODO : Clean implementation if it works
-    if args.copy_init_checkpoint_locally:
-            checkpoint_tmp_dir="tmp-init-checkpoint/"
-            os.makedirs(checkpoint_tmp_dir, exist_ok=True)
-            checkpoint_dir=os.path.dirname(FLAGS.init_checkpoint)
-            checkpoint_file_name = os.path.basename(FLAGS.init_checkpoint)
-            print("*****CB: copy  (" + checkpoint_dir + '/' + checkpoint_file_name + '*' + ")")
-            for file in glob.glob(checkpoint_dir + '/' + checkpoint_file_name + '*'):
-                print(file)
-                shutil.copy(file, checkpoint_tmp_dir)
-            FLAGS.init_checkpoint=checkpoint_tmp_dir + checkpoint_file_name
-            print("*****CB: new checkpoint  (" + FLAGS.init_checkpoint + ")")
 
     train_examples = None
     num_train_steps = None
@@ -234,9 +222,10 @@ def main():
                 tokenizer=tokenizer)
     if args.init_checkpoint is not None:
         logger.info("Loading from {}".format(args.init_checkpoint))
-        state_dict = torch.load(args.init_checkpoint, map_location='cpu')
+        state_dict = torch.load(args.init_checkpoint)
         if args.do_train and args.init_checkpoint.endswith('pytorch_model.bin'):
             model.bert.load_state_dict(state_dict)
+            #model.load_state_dict(state_dict)#torch.load(args.init_checkpoint))
         else:
             filter = lambda x: x[7:] if x.startswith('module.') else x
             state_dict = {filter(k):v for (k,v) in state_dict.items()}

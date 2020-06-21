@@ -50,9 +50,11 @@ NRNAE_test="${data_dir}min_all_without_answer_test.json_bert_r6_20para_preproces
 trivia_train="./preprocessed-open-domain-qa-data/triviaqa-train0.json"
 trivia_dev="./preprocessed-open-domain-qa-data/triviaqa-dev.json"
 
-#python3 main.py --do_train --output_dir ${P1_dir} \
-#	  --train_file ${P1_train} --predict_file ${CRNAE_dev} \
-#          --train_batch_size ${bs} --predict_batch_size ${pbs} --verbose --loss_type ${loss} --tau ${tau} --verbose_logging 
+python3 main.py --do_train --output_dir ${P1_dir} \
+	  --train_file ${P1_train} --predict_file ${CRNAE_dev} \
+	  --init_checkpoint ${BERT_LARGE_ckpt} --bert_config_file ${BERT_CONFIG_file} \
+	  --train_batch_size ${bs} --predict_batch_size ${pbs} --verbose --loss_type ${loss} --tau ${tau} --verbose_logging 
+
 
 #python3 main.py --do_predict --output_dir ${P3noP2_dir} \
 #          --predict_file ${CRNAE_dev} \
