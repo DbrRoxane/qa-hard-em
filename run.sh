@@ -1,7 +1,7 @@
 data=$1
 loss=$2
-bs=2
-pbs=2
+bs=16
+pbs=256
 
 P1_dir="../data/output/P1_SUM_preprocess2/"
 P2_dir="../data/output/P2_CRCAE/"
@@ -36,8 +36,8 @@ sum_dev="${data_dir}min_sums_dev.json_r6_preprocessed2"
 sum_test="${data_dir}min_sums_test.json_r6_preprocessed2"
 CRNAE_dev="${data_dir}min_all_with_answer_dev.json_allrankingtech_r5_3para_preprocessed2"
 CRNAE_test="${data_di}min_all_with_answer_test.json_allrankingtech_r5_3para_preprocessed2"
-NRNAE_dev="${data_dir}min_all_without_answer_dev.json_bert_r6_20para_preprocessed2"
-NRNAE_test="${data_dir}min_all_without_answer_test.json_bert_r6_20para_preprocessed2"
+NRNAE_dev="${data_dir}min_all_without_answer_dev.json_bertbm25_r6_20para_preprocessed2"
+NRNAE_test="${data_dir}min_all_without_answer_test.json_bertbm25_r6_20para_preprocessed2"
 
 #CRCAE_dev="${data_dir}CRCAE_allranking_3para_r5_dev_preprocess.json"
 #CRCAE_test="${data_dir}CRCAE_allranking_3para_r5_test_preprocess.json"
@@ -59,15 +59,15 @@ trivia_dev="./preprocessed-open-domain-qa-data/triviaqa-dev.json"
 #	  --init_checkpoint ${P3noP2_ckpt}\
 #          --predict_batch_size ${pbs} --n_paragraphs "5,6,7,8,9" --prefix CRNAE_r6_3para_dev_
 
-python3 main.py --do_predict --output_dir ${P1_dir} \
-          --predict_file ${CRNAE_test} \
-	  --init_checkpoint ${P1_ckpt}\
-          --predict_batch_size ${pbs} --n_paragraphs "5,6,7,8,9" --prefix CRNAE_r6_3para_test_
+python3 main.py --do_predict --output_dir ${P3noP2_dir} \
+          --predict_file ${NRNAE_dev} \
+	  --init_checkpoint ${P3noP2_ckpt}\
+          --predict_batch_size ${pbs} --n_paragraphs "5,10,15,20" --prefix NRNAE_r6_bertbm25_10para_dev_
 
-python3 main.py --do_predict --output_dir ${P1_dir} \
+python3 main.py --do_predict --output_dir ${P3noP2_dir} \
           --predict_file ${NRNAE_test} \
-	  --init_checkpoint ${P1_ckpt}\
-          --predict_batch_size ${pbs} --n_paragraphs "5,10,15,20" --prefix NRNAE_r6_20para_test_
+	  --init_checkpoint ${P3noP2_ckpt}\
+          --predict_batch_size ${pbs} --n_paragraphs "5,10,15,20" --prefix NRNAE_r6_bertbm25_10para_test_
 
 #python3 main.py --do_predict --output_dir ${P1_dir} \
 #          --predict_file ${CRNAE_test} \
