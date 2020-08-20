@@ -5,6 +5,7 @@ import string
 from collections import Counter
 import pickle
 from IPython import embed
+from rouge import Rouge
 
 def normalize_answer(s):
 
@@ -45,6 +46,14 @@ def f1_score(prediction, ground_truth):
     recall = 1.0 * num_same / len(ground_truth_tokens)
     f1 = (2 * precision * recall) / (precision + recall)
     return f1, precision, recall
+
+def rougel_score(prediction, ground_truth):
+    rouge = Rouge()
+
+    normalized_prediction = normalize_answer(prediction)
+    normalized_ground_truth = normalize_answer(ground_truth)
+
+    return rouge.get_scores(prediction, ground_truth)["rouge-l"]["f"]
 
 
 def exact_match_score(prediction, ground_truth):

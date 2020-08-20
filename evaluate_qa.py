@@ -9,7 +9,7 @@ import numpy as np
 import tokenization
 from collections import defaultdict
 from tqdm import tqdm
-from evaluation_script import normalize_answer, f1_score, exact_match_score
+from evaluation_script import normalize_answer, f1_score, exact_match_score, rougel_score
 
 rawResult = collections.namedtuple("RawResult",
                                   ["unique_id", "start_logits", "end_logits"])
@@ -200,17 +200,19 @@ def write_predictions(logger, all_examples, all_features, all_results, n_best_si
             writer.write(json.dumps(all_nbest_json, indent=4) + "\n")
 
     if n_paragraphs is None:
-        f1s, ems = [], []
+        f1s, ems, rougels = [], [], []
         for prediction, groundtruth in all_predictions.values():
             if len(groundtruth)==0:
                 f1s.append(0)
                 ems.append(0)
+                rougels.append(0)
                 continue
             f1s.append(max([f1_score(prediction, gt)[0] for gt in groundtruth]))
             ems.append(max([exact_match_score(prediction, gt) for gt in groundtruth]))
-        final_f1, final_em = np.mean(f1s), np.mean(ems)
+            rougels.append(max([rougel_score(prediction, gt) for gt in groundtruth]))
+        final_f1, final_em, final_rougel = np.mean(f1s), np.mean(ems), np.mean(rougels)
     else:
-        f1s, ems = [[] for _ in n_paragraphs], [[] for _ in n_paragraphs]
+        f1s, ems, rougels = [[] for _ in n_paragraphs], [[] for _ in n_paragraphs], [[] for _ in n_paragraphs]
         for predictions in all_predictions.values():
             groundtruth = predictions[-1]
             predictions = predictions[:-1]
@@ -222,10 +224,13 @@ def write_predictions(logger, all_examples, all_features, all_results, n_best_si
             for i, prediction in enumerate(predictions):
                 f1s[i].append(max([f1_score(prediction, gt)[0] for gt in groundtruth]))
                 ems[i].append(max([exact_match_score(prediction, gt) for gt in groundtruth]))
-        for n, f1s_, ems_ in zip(n_paragraphs, f1s, ems):
-            logger.info("n=%d\tF1 %.2f\tEM %.2f"%(n, np.mean(f1s_)*100, np.mean(ems_)*100))
-        final_f1, final_em = np.mean(f1s[-1]), np.mean(ems[-1])
-    return final_em, final_f1
+                rougels[i].append(max([rougel_score(prediction, gt) for gt in groundtruth]))
+        for n, f1s_, ems_, rougels_ in zip(n_paragraphs, f1s, ems, rougels):
+            logger.info("n=%d\tF1 %.2f\tEM %.2f"%
+                        (n, np.mean(f1s_)*100, np.mean(ems_)*100), np.mean(rougels_)*100)
+        final_f1, final_em, final_rougel = np.mean(f1s[-1]), np.mean(ems[-1]), np.mean(rougels[-1])
+    return final_rougel, final_em
+    #return final_em, final_f1, final_rougel
 
 def get_final_text(pred_text, orig_text, do_lower_case, logger, verbose_logging):
     """Project the tokenized prediction back to the original text."""

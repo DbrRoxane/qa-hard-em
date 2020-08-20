@@ -62,7 +62,7 @@ def main():
     parser.add_argument("--train_file", type=str, \
                         help="SQuAD json for training. E.g., train-v1.1.json", \
                         default="/home/sewon/data/squad/train-v1.1.json")
-    parser.add_argument("--predict_file", type=str,
+    parseriadd_argument("--predict_file", type=str,
                         help="SQuAD json for predictions. E.g., dev-v1.1.json or test-v1.1.json", \
                         default="/home/sewon/data/squad/dev-v1.1.json")
     parser.add_argument("--init_checkpoint", type=str,
@@ -182,7 +182,7 @@ def main():
             (args.max_seq_length, bert_config.max_position_embeddings))
 
     model = BertForQuestionAnswering(bert_config, device, 4, loss_type=args.loss_type, tau=args.tau)
-    metric_name = "EM"
+    metric_name = "ROUGE-L"
 
 
     tokenizer = tokenization.FullTokenizer(
@@ -279,11 +279,11 @@ def main():
                     model.eval()
                     f1 =  predict(logger, args, model, eval_dataloader, eval_examples, eval_features, \
                                   device, write_prediction=False)
-                    logger.info("Step %d Train loss %.2f EM %.2f F1 %.2f on epoch=%d" % (
+                    logger.info("Step %d Train loss %.2f Rouge-L %.2f EM %.2f on epoch=%d" % (
                         global_step, np.mean(train_losses), f1[0]*100, f1[1]*100, epoch))
                     train_losses = []
                     if best_f1 < f1:
-                        logger.info("Saving model with best %s: %.2f (F1 %.2f) -> %.2f (F1 %.2f) on epoch=%d" % \
+                        logger.info("Saving model with best %s: %.2f (EM %.2f) -> %.2f (EM %.2f) on epoch=%d" % \
                                 (metric_name, best_f1[0]*100, best_f1[1]*100, f1[0]*100, f1[1]*100, epoch))
                         model_state_dict = {k:v.cpu() for (k, v) in model.state_dict().items()}
                         torch.save(model_state_dict, os.path.join(args.output_dir, "best-model.pt"))
