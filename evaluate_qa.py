@@ -9,7 +9,8 @@ import numpy as np
 import tokenization
 from collections import defaultdict
 from tqdm import tqdm
-from evaluation_script import normalize_answer, f1_score, exact_match_score, rougel_score
+from evaluation_script import normalize_answer, f1_score, exact_match_score
+from evaluation_script import rougel_score, bleu_score, meteor_score
 
 rawResult = collections.namedtuple("RawResult",
                                   ["unique_id", "start_logits", "end_logits"])
@@ -200,19 +201,31 @@ def write_predictions(logger, all_examples, all_features, all_results, n_best_si
             writer.write(json.dumps(all_nbest_json, indent=4) + "\n")
 
     if n_paragraphs is None:
-        f1s, ems, rougels = [], [], []
+        f1s, ems, rougels, bleu1s, bleu4s, meteors = [], [], [], [], [], []
         for prediction, groundtruth in all_predictions.values():
             if len(groundtruth)==0:
                 f1s.append(0)
                 ems.append(0)
                 rougels.append(0)
+                bleu1s.append(0)
+                bleu4s.append(0)
+                meteors.append(0)
                 continue
             f1s.append(max([f1_score(prediction, gt)[0] for gt in groundtruth]))
             ems.append(max([exact_match_score(prediction, gt) for gt in groundtruth]))
             rougels.append(max([rougel_score(prediction, gt) for gt in groundtruth]))
-        final_f1, final_em, final_rougel = np.mean(f1s), np.mean(ems), np.mean(rougels)
+            bleu1s.append(max([bleu_score(prediction, gt, 1) for gt in groundtruth]))
+            bleu4s.append(max([bleu_score(prediction, gt, 4) for gt in groundtruth]))
+            meteors.append(max([meteor_score(prediction, gt) for gt in groundtruth]))
+
+        final_f1, final_em, final_rougel, final_bleu1, final_bleu4, final_meteor = \
+                np.mean(f1s), np.mean(ems), np.mean(rougels), \
+                np.mean(bleu1s), np.mean(bleu4s), np.mean(meteors)
     else:
-        f1s, ems, rougels = [[] for _ in n_paragraphs], [[] for _ in n_paragraphs], [[] for _ in n_paragraphs]
+        f1s, ems, rougels, bleu1, bleu4, meteor = \
+                [[] for _ in n_paragraphs], [[] for _ in n_paragraphs], \
+                [[] for _ in n_paragraphs], [[] for _ in n_paragraphs], \
+                [[] for _ in n_paragraphs], [[] for _ in n_paragraphs]
         for predictions in all_predictions.values():
             groundtruth = predictions[-1]
             predictions = predictions[:-1]
@@ -220,16 +233,28 @@ def write_predictions(logger, all_examples, all_features, all_results, n_best_si
                 for i in range(len(n_paragraphs)):
                     f1s[i].append(0)
                     ems[i].append(0)
+                    rougels.append(0)
+                    bleu1s.append(0)
+                    bleu4s.append(0)
+                    meteors.append(0)
                 continue
             for i, prediction in enumerate(predictions):
                 f1s[i].append(max([f1_score(prediction, gt)[0] for gt in groundtruth]))
                 ems[i].append(max([exact_match_score(prediction, gt) for gt in groundtruth]))
                 rougels[i].append(max([rougel_score(prediction, gt) for gt in groundtruth]))
-        for n, f1s_, ems_, rougels_ in zip(n_paragraphs, f1s, ems, rougels):
-            logger.info("n=%d\tF1 %.2f\tEM %.2f"%
-                        (n, np.mean(f1s_)*100, np.mean(ems_)*100), np.mean(rougels_)*100)
-        final_f1, final_em, final_rougel = np.mean(f1s[-1]), np.mean(ems[-1]), np.mean(rougels[-1])
-    return final_rougel, final_em
+                bleu1s[i].append(max([bleu_score(prediction, gt, 1) for gt in groundtruth]))
+                bleu4s[i].append(max([bleu_score(prediction, gt, 4) for gt in groundtruth]))
+                meteors[i].append(max([meteor_score(prediction, gt) for gt in groundtruth]))
+
+        for n, f1s_, ems_, rougels_, bleu1s_, bleu4s_, meteors_ in \
+                            zip(n_paragraphs, f1s, ems, rougels, bleu1s, bleu4s, meteors):
+            logger.info("n=%d\tF1 %.2f\tEM %.2f\tROUGE-L %.2f\tBLEU-1 %.2f\BLEU-4 %.2f\tMETEOR %.2f"%
+                        (n, np.mean(f1s_)*100, np.mean(ems_)*100, np.mean(rougels_)*100, \
+                         np.mean(bleu1s_)*100, np.mean(bleu4s_)*100, np.mean(meteors_)*100))
+        final_f1, final_em, final_rougel, final_bleu1, final_bleu4, final_meteor = \
+                np.mean(f1s[-1]), np.mean(ems[-1]), np.mean(rougels[-1]), \
+                np.mean(bleu1s[-1]), np.mean(bleu4s[-1]), np.mean(meteors[-1])
+    return final_f1, final_em, final_rougel, final_bleu1, final_bleu4, final_meteor
     #return final_em, final_f1, final_rougel
 
 def get_final_text(pred_text, orig_text, do_lower_case, logger, verbose_logging):

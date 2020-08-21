@@ -5,7 +5,10 @@ import string
 from collections import Counter
 import pickle
 from IPython import embed
+import nltk
 from rouge import Rouge
+from nltk.translate.bleu_score import sentence_bleu
+from nltk.translate.meteor_score import meteor_score as ms
 
 def normalize_answer(s):
 
@@ -53,8 +56,21 @@ def rougel_score(prediction, ground_truth):
     normalized_prediction = normalize_answer(prediction)
     normalized_ground_truth = normalize_answer(ground_truth)
 
-    return rouge.get_scores(prediction, ground_truth)["rouge-l"]["f"]
+    score =  max([s["rouge-l"]["f"] for s in rouge.get_scores(prediction, ground_truth)])
+    return score
 
+def bleu_score(prediction, ground_truth, n=1):
+    pred_tokenized = nltk.word_tokenize(prediction)
+    gt_tokenized = nltk.word_tokenize(ground_truth)
+
+    if n==1:
+        score = sentence_bleu(gt_tokenized, pred_tokenized, weighs=(1,0,0,0))
+    else:
+        score = sentence_bleu(gt_tokenized, pred_tokenized) #bleu-4 automatically
+    return score
+
+def meteor_score(prediction, ground_truth):
+    return ms(ground_truth, prediction)
 
 def exact_match_score(prediction, ground_truth):
     return (normalize_answer(prediction) == normalize_answer(ground_truth))
@@ -62,11 +78,20 @@ def exact_match_score(prediction, ground_truth):
 def update_answer(metrics, prediction, gold):
     em = exact_match_score(prediction, gold)
     f1, prec, recall = f1_score(prediction, gold)
+    rougel = rougel_score(prediction, gold)
+    bleu1 = bleu_score(prediction, gold, 1)
+    bleu4 = bleu_score(prediction, gold, 4)
+    meteor = meteor_score(prediction, gold)
+
     metrics['em'] += em
     metrics['f1'] += f1
     metrics['prec'] += prec
     metrics['recall'] += recall
-    return em, prec, recall
+    metrics['rougel'] += rougel
+    metrics['bleu1'] += bleu1
+    metrics['bleu4'] += bleu4
+    metrics['meteor'] += meteor
+    return em, prec, recall, rougel, bleu1, bleu4, meteor
 
 def update_sp(metrics, prediction, gold):
     cur_sp_pred = set(map(tuple, prediction))
@@ -96,14 +121,15 @@ def eval(prediction_file, gold_file):
     with open(gold_file) as f:
         gold = json.load(f)
 
-    metrics = {'em': 0, 'f1': 0, 'prec': 0, 'recall': 0,
+    metrics = {'rougel': 0, 'bleu1': 0, 'bleu4': 0, 'meteor': 0,
+        'em': 0, 'f1': 0, 'prec': 0, 'recall': 0,
         'sp_em': 0, 'sp_f1': 0, 'sp_prec': 0, 'sp_recall': 0,
         'joint_em': 0, 'joint_f1': 0, 'joint_prec': 0, 'joint_recall': 0}
 
     for dp in gold:
         cur_id = dp['_id']
-        em, prec, recall = update_answer(
-                metrics, prediction['answer'][cur_id], dp['answer'])
+        em, prec, recall, rougel, bleu1, bleu4, meteor = update_answer(
+            metrics, prediction['answer'][cur_id], dp['answer'])
 
     N = len(gold)
     for k in metrics.keys():
@@ -116,14 +142,15 @@ def analyze(prediction_file, gold_file):
         prediction = json.load(f)
     with open(gold_file) as f:
         gold = json.load(f)
-    metrics = {'em': 0, 'f1': 0, 'prec': 0, 'recall': 0,
+    metrics = {'rougel': 0, 'bleu1': 0, 'bleu4': 0, 'meteor': 0,
+        'em': 0, 'f1': 0, 'prec': 0, 'recall': 0,
         'sp_em': 0, 'sp_f1': 0, 'sp_prec': 0, 'sp_recall': 0,
         'joint_em': 0, 'joint_f1': 0, 'joint_prec': 0, 'joint_recall': 0}
 
     for dp in gold:
         cur_id = dp['_id']
 
-        em, prec, recall = update_answer(
+        em, prec, recall, rougel, bleu1, bleu4, meteor = update_answer(
                 metrics, prediction['answer'][cur_id], dp['answer'])
         if (prec + recall == 0):
             f1 = 0
@@ -131,7 +158,7 @@ def analyze(prediction_file, gold_file):
             f1 = 2 * prec * recall / (prec+recall)
 
         print (dp['answer'], prediction['answer'][cur_id])
-        print (f1, em)
+        print (f1, em, rougel, bleu1, bleu4, meteor)
         a = input()
 
 

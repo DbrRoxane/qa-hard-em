@@ -3,9 +3,9 @@ loss=$2
 bs=16
 pbs=256
 
-data_dir="../RankAndExt/data/squad_format/"
-P1_dir="../RankAndExt/data/models/P1_sum_rbc/
-"
+data_dir="../RankAndEx/data/squad_format/"
+P1_dir="../RankAndEx/data/models/P1_MIN/"
+P3_dir="../RankAndEx/data/models/P3_minP1/"
 #P1_dir="../data/output/P1_SUM_preprocess2/"
 #P2_dir="../data/output/P2_CRCAE/"
 #P3noP2_dir="../data/output/P3noP2_CRNAE_preprocess2/"
@@ -15,7 +15,9 @@ P1_dir="../RankAndExt/data/models/P1_sum_rbc/
 #BERT_LARGE_ckpt="bert-large-uncased/pytorch_model.bin"
 #BERT_CONFIG_file="bert-large-uncased/bert_config.json"
 
-P1_ckpt="${P1_dir}best-model.pt"
+#P1_ckpt="${P1_dir}best-model.pt"
+P1_ckpt="${P1_dir}min_best-model.pt"
+P3_ckpt="${P3_dir}best-model.py"
 #P2_ckpt="${P2_dir}best-model.pt"
 #P3noP2_ckpt="${P3noP2_dir}best-model.pt"
 #P3noP1_ckpt="${P3noP1_dir}best-model.pt"
@@ -28,25 +30,36 @@ else
     tau=0
 fi
 
-P1_train="${data_dir}/rbc_sum_train.json"
-sum_dev="${data_dir}/rbc_sum_dev.json"
-sum_test="${data_dir}/rbc_sum_test.json"
+
+#train_file="${data_dir}/min_train0.jsonl"
+#for index in 1 2 3 ; do
+#	train_file="${train_file},${data_dir}/min_train${index}.jsonl"
+#done
+#P1_train="${data_dir}rbc_sum_train.json"
+sum_dev="${data_dir}rbc_sum_dev.json"
+#min_dev.jsonl"
+sum_test="${data_dir}rbc_sum_test.json"
+#min_test.jsonl"
+
+#P1_train="${data_dir}rbc_sum_train.json"
+#sum_dev="${data_dir}rbc_sum_dev.json"
+#sum_test="${data_dir}rbc_sum_test.json"
 
 #P1_train="${data_dir}SUM_r6_train_preprocess2.json"
 #P2_train="${data_dir}CRCAE_bertbm25_3para_r6_train.json"
 #P3_train="${data_dir}CRNAE_bertbm25_3para_r6_train_preprocess.json"
 
 #P1_train="${data_dir}min_sums_train.json_r6_preprocessed2"
-#P3_train="${data_dir}min_all_with_answer_train.json_bertbm25oracle_r6_3para_preprocessed2"
+P3_train="${data_dir}rouge/min_all_with_answer_train.json_bertbm25oracle_r6_3para_preprocessed2"
 #P3_train="${data_dir}CRNAE_bertbm25_3para_r6_train_preprocess.json"
 
 #sum_dev="${data_dir}min_sums_dev.json_r6_preprocessed2"
 #sum_test="${data_dir}min_sums_test.json_r6_preprocessed2"
-#CRNAE_dev="${data_dir}min_all_with_answer_dev.json_allrankingtech_r5_3para_preprocessed2"
+CRNAE_dev="${data_dir}rouge/min_all_with_answer_dev.json_allrankingtech_r5_3para_preprocessed2"
 #CRNAE_test="${data_di}min_all_with_answer_test.json_allrankingtech_r5_3para_preprocessed2"
-#NRNAE_dev="${data_dir}min_all_without_answer_dev.json_bertbm25_r6_20sorted_preprocessed2"
+NRNAE_dev="${data_dir}rouge/min_all_without_answer_dev.json_bertbm25_r6_20sorted_preprocessed2"
 ##min_all_without_answer_dev.json_bertbm25_r6_20sorted_preprocessed2"
-#NRNAE_test="${data_dir}min_all_without_answer_test.json_bertbm25_r6_20sorted_preprocessed2"
+NRNAE_test="${data_dir}rouge/min_all_without_answer_test.json_bertbm25_r6_20sorted_preprocessed2"
 #min_all_without_answer_test.json_bertbm25_r6_20sorted_preprocessed2"
 
 #CRCAE_dev="${data_dir}CRCAE_allranking_3para_r5_dev_preprocess.json"
@@ -58,19 +71,35 @@ sum_test="${data_dir}/rbc_sum_test.json"
 
 
 
-python3 main.py --do_train --output_dir ${P1_dir} \
-	  --train_file ${P1_train} --predict_file ${sum_dev} \
+python3 main.py --do_train --output_dir ${P3_dir} \
+	  --train_file ${P3_train} --predict_file ${CRNAE_dev} \
+	  --init_checkpoint ${P1_ckpt} \
           --train_batch_size ${bs} --predict_batch_size ${pbs} --verbose --loss_type ${loss} --tau ${tau} --verbose_logging 
 
-python3 main.py --do_predict --output_dir ${P1_dir} \
-          --predict_file ${sum_dev} \
-	  --init_checkpoint ${P1_ckpt}\
-          --predict_batch_size ${pbs} --n_paragraphs "1,2,3" --prefix rbc_sum_dev
+python3 main.py --do_predict --output_dir ${P3_dir} \
+          --predict_file ${NRNAE_dev} \
+	  --init_checkpoint ${P1_ckpt} \
+          --predict_batch_size ${pbs} --n_paragraphs "5,10,15,20,25,30,35,40" --prefix premin_ftcrnae_nrnae_dev_
 
-python3 main.py --do_predict --output_dir ${P1_dir} \
-          --predict_file ${sum_test} \
-	  --init_checkpoint ${P1_ckpt}\
-          --predict_batch_size ${pbs} --n_paragraphs "1,2,3" --prefix rbc_sum_test
+python3 main.py --do_predict --output_dir ${P3_dir} \
+          --predict_file ${NRNAE_test} \
+	  --init_checkpoint ${P1_ckpt} \
+          --predict_batch_size ${pbs} --n_paragraphs "5,10,15,20,25,30,35,40" --prefix premin_ftcrnae_nrnae_test_
+
+
+#python3 main.py --do_train --output_dir ${P1_dir} \
+#	  --train_file ${P1_train} --predict_file ${sum_dev} \
+#          --train_batch_size ${bs} --predict_batch_size ${pbs} --verbose --loss_type ${loss} --tau ${tau} --verbose_logging 
+
+#python3 main.py --do_predict --output_dir ${P1_dir} \
+#          --predict_file ${sum_dev} \
+#	  --init_checkpoint ${P1_ckpt} \
+#          --predict_batch_size ${pbs} --n_paragraphs "1,2,3,4,5" --prefix min_mydata_dev_
+#
+#python3 main.py --do_predict --output_dir ${P1_dir} \
+#          --predict_file ${sum_test} \
+#	  --init_checkpoint ${P1_ckpt} \
+#          --predict_batch_size ${pbs} --n_paragraphs "1,2,3,4,5" --prefix min_mydata_test_
 
 
 

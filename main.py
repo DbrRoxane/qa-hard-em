@@ -62,7 +62,7 @@ def main():
     parser.add_argument("--train_file", type=str, \
                         help="SQuAD json for training. E.g., train-v1.1.json", \
                         default="/home/sewon/data/squad/train-v1.1.json")
-    parseriadd_argument("--predict_file", type=str,
+    parser.add_argument("--predict_file", type=str,
                         help="SQuAD json for predictions. E.g., dev-v1.1.json or test-v1.1.json", \
                         default="/home/sewon/data/squad/dev-v1.1.json")
     parser.add_argument("--init_checkpoint", type=str,
@@ -135,8 +135,8 @@ def main():
     logger.info(args)
 
     if args.local_rank == -1 or args.no_cuda:
-        device = torch.device("cuda" if torch.cuda.is_available() and not args.no_cuda else "cpu")
-        n_gpu = torch.cuda.device_count()
+        device = torch.device("cuda:1" if torch.cuda.is_available() and not args.no_cuda else "cpu")
+        n_gpu = 1 #torch.cuda.device_count()
     else:
         device = torch.device("cuda", args.local_rank)
         n_gpu = 1
@@ -277,18 +277,20 @@ def main():
                     model.zero_grad()
                 if global_step % args.eval_period == 0:
                     model.eval()
-                    f1 =  predict(logger, args, model, eval_dataloader, eval_examples, eval_features, \
+                    f1, em, rougel, bleu1, bleu4, meteor =  predict(logger, args, model, eval_dataloader, eval_examples, eval_features, \
                                   device, write_prediction=False)
-                    logger.info("Step %d Train loss %.2f Rouge-L %.2f EM %.2f on epoch=%d" % (
-                        global_step, np.mean(train_losses), f1[0]*100, f1[1]*100, epoch))
+                    logger.info("Step %d Train loss %.2f\tF1 %.2f\tEM %.2f\tROUGE-L %.2f\tBLEU-1 %.2f\BLEU-4 %.2f\tMETEOR %.2f on epoch=%d" % \
+                                (global_step, np.mean(train_losses), f1*100, em*100, rougel*100,
+                                 bleu1*100, bleu4*100, meteor*100, epoch))
                     train_losses = []
                     if best_f1 < f1:
                         logger.info("Saving model with best %s: %.2f (EM %.2f) -> %.2f (EM %.2f) on epoch=%d" % \
-                                (metric_name, best_f1[0]*100, best_f1[1]*100, f1[0]*100, f1[1]*100, epoch))
+                                (metric_name, best_rougel*100, best_em*100, rougel*100, em*100, epoch))
                         model_state_dict = {k:v.cpu() for (k, v) in model.state_dict().items()}
                         torch.save(model_state_dict, os.path.join(args.output_dir, "best-model.pt"))
                         model = model.to(device)
-                        best_f1 = f1
+                        best_rougel = rougel
+                        best_em = em
                         wait_step = 0
                         stop_training = False
                     else:
@@ -306,9 +308,9 @@ def main():
             model = [m.eval() for m in model]
         else:
             model.eval()
-        f1 = predict(logger, args, model, eval_dataloader, eval_examples, eval_features,
-                     device,
-                     varying_n_paragraphs=len(args.n_paragraphs)>1)
+        f1, em, rougel, bleu1, bleu4, meteor = \
+                predict(logger, args, model, eval_dataloader, eval_examples, eval_features,
+                     device, varying_n_paragraphs=len(args.n_paragraphs)>1)
 
 
 def predict(logger, args, model, eval_dataloader, eval_examples, eval_features, device, \
@@ -337,7 +339,8 @@ def predict(logger, args, model, eval_dataloader, eval_examples, eval_features, 
 
     output_prediction_file = os.path.join(args.output_dir, args.prefix+"predictions.json")
     output_nbest_file = os.path.join(args.output_dir, args.prefix+"nbest_predictions.json")
-    f1 = write_predictions(logger, eval_examples, eval_features, all_results,
+    f1, em, rougel, bleu1, bleu4, meteor = \
+            write_predictions(logger, eval_examples, eval_features, all_results,
                     args.n_best_size if write_prediction else 1,
                     args.do_lower_case,
                     output_prediction_file if write_prediction else None,
@@ -345,7 +348,7 @@ def predict(logger, args, model, eval_dataloader, eval_examples, eval_features, 
                     args.verbose,
                     write_prediction=write_prediction,
                     n_paragraphs=None if not varying_n_paragraphs else [int(n) for n in args.n_paragraphs.split(',')])
-    return f1
+    return f1, em, rougel, bleu1, bleu4, meteor
 
 
 
