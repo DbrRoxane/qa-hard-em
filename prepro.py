@@ -198,9 +198,13 @@ def convert_examples_to_features(logger, args, examples, tokenizer, max_seq_leng
                     all_doc_tokens.append(sub_token)
             tok_start_positions, tok_end_positions = [], []
 
-            if is_training:
+            if len(orig_to_tok_index) == 0:
+                print("oups", original_answer_text_list)
+
+            if is_training and len(orig_to_tok_index) > 0 :
                 for (orig_answer_text, start_position, end_position) in zip( \
                             original_answer_text_list, start_position_list, end_position_list):
+                    #print(len(orig_to_tok_index), start_position)
                     tok_start_position = orig_to_tok_index[start_position]
                     if end_position < len(doc_tokens) - 1:
                         tok_end_position = orig_to_tok_index[end_position + 1] - 1

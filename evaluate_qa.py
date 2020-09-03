@@ -222,7 +222,7 @@ def write_predictions(logger, all_examples, all_features, all_results, n_best_si
                 np.mean(f1s), np.mean(ems), np.mean(rougels), \
                 np.mean(bleu1s), np.mean(bleu4s), np.mean(meteors)
     else:
-        f1s, ems, rougels, bleu1, bleu4, meteor = \
+        f1s, ems, rougels, bleu1s, bleu4s, meteors = \
                 [[] for _ in n_paragraphs], [[] for _ in n_paragraphs], \
                 [[] for _ in n_paragraphs], [[] for _ in n_paragraphs], \
                 [[] for _ in n_paragraphs], [[] for _ in n_paragraphs]
@@ -248,7 +248,7 @@ def write_predictions(logger, all_examples, all_features, all_results, n_best_si
 
         for n, f1s_, ems_, rougels_, bleu1s_, bleu4s_, meteors_ in \
                             zip(n_paragraphs, f1s, ems, rougels, bleu1s, bleu4s, meteors):
-            logger.info("n=%d\tF1 %.2f\tEM %.2f\tROUGE-L %.2f\tBLEU-1 %.2f\BLEU-4 %.2f\tMETEOR %.2f"%
+            logger.info("n=%d\tF1 %.2f\tEM %.2f\tROUGE-L %.2f\tBLEU-1 %.2f\tBLEU-4 %.2f\tMETEOR %.2f"%
                         (n, np.mean(f1s_)*100, np.mean(ems_)*100, np.mean(rougels_)*100, \
                          np.mean(bleu1s_)*100, np.mean(bleu4s_)*100, np.mean(meteors_)*100))
         final_f1, final_em, final_rougel, final_bleu1, final_bleu4, final_meteor = \
@@ -277,12 +277,13 @@ def get_final_text(pred_text, orig_text, do_lower_case, logger, verbose_logging)
     tokenizer = tokenization.BasicTokenizer(do_lower_case=do_lower_case)
 
     tok_text = " ".join(tokenizer.tokenize(orig_text))
+    pred_text = " ".join(tokenizer.tokenize(pred_text))
 
     start_position = tok_text.find(pred_text)
     if start_position == -1:
-        if verbose_logging:
-            logger.info(
-                "Unable to find text: '%s' in '%s' when tokenized is '%s'" % (pred_text, orig_text, tok_text))
+#        if verbose_logging:
+#            logger.info(
+#                "Unable to find text: '%s' in '%s' when tokenized is '%s'" % (pred_text, orig_text, tok_text))
         return orig_text
     end_position = start_position + len(pred_text) - 1
 

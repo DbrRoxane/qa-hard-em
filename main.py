@@ -244,7 +244,8 @@ def main():
 
         global_step = 0
 
-        best_f1 = (-1, -1)
+        best_rougel = 0
+        best_em = 0
         wait_step = 0
         model.train()
         global_step = 0
@@ -279,11 +280,11 @@ def main():
                     model.eval()
                     f1, em, rougel, bleu1, bleu4, meteor =  predict(logger, args, model, eval_dataloader, eval_examples, eval_features, \
                                   device, write_prediction=False)
-                    logger.info("Step %d Train loss %.2f\tF1 %.2f\tEM %.2f\tROUGE-L %.2f\tBLEU-1 %.2f\BLEU-4 %.2f\tMETEOR %.2f on epoch=%d" % \
+                    logger.info("Step %d Train loss %.2f\tF1 %.2f\tEM %.2f\tROUGE-L %.2f\tBLEU-1 %.2f\tBLEU-4 %.2f\tMETEOR %.2f on epoch=%d" % \
                                 (global_step, np.mean(train_losses), f1*100, em*100, rougel*100,
                                  bleu1*100, bleu4*100, meteor*100, epoch))
                     train_losses = []
-                    if best_f1 < f1:
+                    if best_rougel < rougel:
                         logger.info("Saving model with best %s: %.2f (EM %.2f) -> %.2f (EM %.2f) on epoch=%d" % \
                                 (metric_name, best_rougel*100, best_em*100, rougel*100, em*100, epoch))
                         model_state_dict = {k:v.cpu() for (k, v) in model.state_dict().items()}

@@ -7,7 +7,7 @@ import pickle
 from IPython import embed
 import nltk
 from rouge import Rouge
-from nltk.translate.bleu_score import sentence_bleu
+from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 from nltk.translate.meteor_score import meteor_score as ms
 
 def normalize_answer(s):
@@ -53,23 +53,34 @@ def f1_score(prediction, ground_truth):
 def rougel_score(prediction, ground_truth):
     rouge = Rouge()
 
-    normalized_prediction = normalize_answer(prediction)
-    normalized_ground_truth = normalize_answer(ground_truth)
-
-    score =  max([s["rouge-l"]["f"] for s in rouge.get_scores(prediction, ground_truth)])
+    #normalized_prediction = normalize_answer(prediction)
+    #normalized_ground_truth = normalize_answer(ground_truth)
+    if len(prediction) > 0 and prediction != ".":
+        score =  max([s["rouge-l"]["f"] for s in rouge.get_scores(prediction, ground_truth)])
+    else:
+        score = 0
     return score
 
 def bleu_score(prediction, ground_truth, n=1):
+    #normalized_prediction = normaliz_answer(prediction)
+    #normalized_ground_truth = normalize_answer(ground_truth)
+
     pred_tokenized = nltk.word_tokenize(prediction)
     gt_tokenized = nltk.word_tokenize(ground_truth)
+    chencherry = SmoothingFunction()
 
-    if n==1:
-        score = sentence_bleu(gt_tokenized, pred_tokenized, weighs=(1,0,0,0))
+    if n ==1:
+        score = sentence_bleu([gt_tokenized], pred_tokenized, weights=(1,0,0,0))
+    elif len(pred_tokenized) != 0:
+        score = sentence_bleu([gt_tokenized], pred_tokenized, smoothing_function=chencherry.method1 ) #bleu-4 automatically
     else:
-        score = sentence_bleu(gt_tokenized, pred_tokenized) #bleu-4 automatically
+        print("weird")
+        score = 0
     return score
 
 def meteor_score(prediction, ground_truth):
+    #normalized_prediction = normalize_answer(prediction)
+    #normalized_ground_truth = normalize_answer(ground_truth)
     return ms(ground_truth, prediction)
 
 def exact_match_score(prediction, ground_truth):
